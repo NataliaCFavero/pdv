@@ -25,7 +25,7 @@ import com.zx.pdv.service.PdvService;
 import rx.Single;
 
 @RestController
-@RequestMapping(value = "/pdv", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/pdv", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @Lazy
 public class PdvController {
 
@@ -37,7 +37,7 @@ public class PdvController {
 		this.service = Objects.requireNonNull(service);
 	}
 
-	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public Single<PdvReqResp> create(@RequestBody @Valid final PdvReqResp pdv) {
 				
 		return service.save(pdv).toSingle().doOnSuccess(result -> {
