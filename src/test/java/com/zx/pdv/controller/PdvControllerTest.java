@@ -1,6 +1,8 @@
 package com.zx.pdv.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Arrays;
@@ -33,7 +35,7 @@ public class PdvControllerTest {
 	
 	@MockBean
 	private PdvService service;
-	
+		
 	
 	private PdvReqResp createPdv() {
 
@@ -88,10 +90,10 @@ public class PdvControllerTest {
 				+ "\"address\": {"
 					+ "\"type\": \"Point\"," + "\"coordinates\": [-46.57421, -21.785741]}" 
 				+ "}";
-		mockMvc.perform(post("/pdv")
-	            .contentType(MediaType.APPLICATION_JSON)
-	            .content(payload)
-	            .accept(MediaType.APPLICATION_JSON))
+		mockMvc.perform(post("/pdv/")
+				.contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
+				.content(payload))
+				.andDo(print())	
 	            .andExpect(status().isOk());
 	}
 	
@@ -115,10 +117,9 @@ public class PdvControllerTest {
 				+ "\"address\": {"
 					+ "\"type\": \"Point\"," + "\"coordinates\": [-46.57421, -21.785741]}" 
 				+ "}";
-		mockMvc.perform(post("/pdv")
-	            .contentType(MediaType.APPLICATION_JSON)
-	            .content(payload)
-	            .accept(MediaType.APPLICATION_JSON))
+		mockMvc.perform(post("/pdv/")
+	            .contentType(MediaType.APPLICATION_JSON_VALUE)
+	            .content(payload))
 	            .andExpect(status().is(400));
 	}
 	
