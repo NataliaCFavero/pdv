@@ -8,6 +8,9 @@ Project to save and find near pdvs.
 ## Getting Started
 	docker pull cassandra
 	docker run --name pdv-cassandra -d cassandra:3.0.0
+	
+## Running script
+	src/main/resources/data.cql
 
 ## Building Project
 	gradle clean build

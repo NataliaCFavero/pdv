@@ -10,3 +10,5 @@ cassandra:
     keyspace: pdv
     username: ''
     password: ''
+
+
