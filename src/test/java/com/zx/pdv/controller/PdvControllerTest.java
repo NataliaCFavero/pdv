@@ -97,23 +97,7 @@ public class PdvControllerTest {
 		
 		verify(service, times(1)).findById(id);      
 	}
-	
-	@Test
-	public void testFindCloserPdv() throws Exception {
-		PdvReqResp pdv = Fixture.from(PdvReqResp.class).gimme("complete");
-		Double lat = pdv.getAddress().getCoordinates().get(0);
-		Double lng = pdv.getAddress().getCoordinates().get(1);
-		when(service.findCloserPdv(lat, lng)).thenReturn(Observable.just(pdv));
 		
-		mockMvc.perform(get("/pdv/{lat}/{lng}", lat, lng)
-	            .contentType(MediaType.APPLICATION_JSON_VALUE))
-	            .andExpect(status().is(200))
-	            .andExpect(jsonPath("$.id", is(pdv.getId().toString())))
-	            .andExpect(jsonPath("$.document", is(pdv.getDocument())));
-		
-		verify(service, times(1)).findCloserPdv(lat, lng);		
-	}
-	
 	@Test
 	public void testNotFindPdvCloser() throws Exception {
 		when(service.findCloserPdv(10.0, 30.0)).thenReturn(Observable.error(new IllegalArgumentException("Pdv not found")));
