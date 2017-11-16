@@ -1,7 +1,7 @@
 # Project - Pdv
 Project to save and find near pdvs.
 
-##Prerequisites
+## Prerequisites
 * Java SE 8
 * Gradle 2.1
 
@@ -9,13 +9,13 @@ Project to save and find near pdvs.
 	docker pull cassandra
 	docker run --name pdv-cassandra -d cassandra:3.0.0
 
-##Building Project
+## Building Project
 	gradle clean build
 
-##Run Application
+## Run Application
 	gradle bootRun
 
-##Usage
+## Usage
  - GET: http://localhost:8080/pdv/{id}
  	Return one Pdv
  - POST: http://localhost:8080/pdv
@@ -56,5 +56,5 @@ Project to save and find near pdvs.
         }
     }
 
-#Deployment
+## Deployment
 	
