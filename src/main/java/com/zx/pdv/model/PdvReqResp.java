@@ -22,7 +22,6 @@ public class PdvReqResp {
 	@NotNull
 	private String ownerName;
 	
-	@CNPJ(formatted=true)
 	@NotNull
 	private String document;
 	

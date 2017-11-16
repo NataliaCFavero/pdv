@@ -25,10 +25,9 @@ import rx.Observable;
 @Lazy
 public class PdvService {
 
-	private static final String INVALID_DOCUMENT = "Invalid Document";
 	private PdvRepository repository;
 	private Utils utils;
-	
+
 	@Autowired
 	public PdvService(PdvRepository repository) {
 		utils = new Utils();
@@ -36,33 +35,38 @@ public class PdvService {
 	}
 
 	public Observable<PdvReqResp> save(PdvReqResp pdv) {
-		
-		pdv.setDocument(utils.clearDocument(pdv.getDocument()));
-		
-		return pdvExists(pdv.getDocument())
-				.map(a -> createNewPdv(pdv))
-				.flatMap(p -> repository.save(p))
-				.map(this::convertToResponse);
+		String cpfUnformated = utils.clearDocument(pdv.getDocument());
+
+		Assert.isTrue(utils.cnpjIsValid(cpfUnformated), "Invalid Document");
+
+		pdv.setDocument(cpfUnformated);
+
+		Observable<Boolean> pdvExists = repository.find(pdv.getDocument()).isEmpty()
+				.doOnNext(x -> Assert.isTrue(x, "Pdv exists"));
+		return pdvExists.map(a -> createNewPdv(pdv)).flatMap(p -> repository.save(p)).map(this::toResponse);
 	}
 
 	public Observable<PdvReqResp> findById(UUID id) {
-		return repository.find(id).map(this::convertToResponse);
+
+		return repository.find(id).switchIfEmpty(Observable.error(new IllegalArgumentException("Pdv not found")))
+				.map(pdv -> toResponse(pdv));
 	}
 
-	public Observable<PdvReqResp> findPdv(Double x, Double y) {
+	public Observable<PdvReqResp> findCloserPdv(Double x, Double y) {
 
 		Point point = new Point(x, y);
+		Observable<PdvReqResp> newPdv = repository.find().map(this::createPdvWithMultiPolygon);
 
-		return repository.find().map(this::createPdvWithMultiPolygon)
-				.filter(pdv -> containsPdv(pdv.getMultiPolygon(), point))
-				.map(pdv -> calculateDistance(pdv, point))
-				.toSortedList((pdv, pdv1) -> compareDistance(pdv, pdv1))
-				.flatMap(Observable::from).first();
+		Observable<PdvReqResp> pdvInArea = newPdv.filter(pdv -> containsPdv(pdv.getMultiPolygon(), point));
+
+		Observable<PdvReqResp> pdvWithDistance = pdvInArea.switchIfEmpty(Observable.error(new IllegalArgumentException("Pdv not found"))).map(pdv -> calculateDistance(pdv, point));
+
+		return pdvWithDistance.toSortedList((pdv, pdv1) -> compareDistance(pdv, pdv1)).flatMap(Observable::from).first();
 	}
 
 	private Pdv createNewPdv(PdvReqResp pdv) {
 		pdv.setId(UUID.randomUUID());
-		return convertToPdv(pdv);
+		return toPdv(pdv);
 	}
 
 	private static Integer compareDistance(PdvReqResp pdv1, PdvReqResp pdv2) {
@@ -125,7 +129,7 @@ public class PdvService {
 	}
 
 	private PdvReqResp createPdvWithMultiPolygon(Pdv pdvDao) {
-		PdvReqResp pdv = convertToResponse(pdvDao);
+		PdvReqResp pdv = toResponse(pdvDao);
 		pdv.setMultiPolygon(createMultipolygon(pdvDao));
 		return pdv;
 	}
@@ -170,13 +174,7 @@ public class PdvService {
 		return points;
 	}
 
-	private Observable<Boolean> pdvExists(String document) {
-		Objects.requireNonNull(document);
-		return repository.find(document).isEmpty().doOnNext(x -> Assert.isTrue(x, INVALID_DOCUMENT));
-
-	}
-
-	private PdvReqResp convertToResponse(Pdv pdv) {
+	private PdvReqResp toResponse(Pdv pdv) {
 		Objects.requireNonNull(pdv);
 		PdvReqResp model = new PdvReqResp();
 
@@ -195,7 +193,7 @@ public class PdvService {
 		return model;
 	}
 
-	private Pdv convertToPdv(PdvReqResp pdv) {
+	private Pdv toPdv(PdvReqResp pdv) {
 		Objects.requireNonNull(pdv);
 		Pdv dao = new Pdv();
 		dao.setAddress(pdv.getAddress().getCoordinates());

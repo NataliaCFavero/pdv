@@ -1,6 +1,7 @@
 package com.zx.pdv.controller;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import javax.validation.Valid;
 
@@ -11,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +25,7 @@ import com.zx.pdv.model.PdvReqResp;
 import com.zx.pdv.service.PdvService;
 
 @RestController
-@RequestMapping(value = "/pdv/", produces=MediaType.APPLICATION_JSON_UTF8_VALUE, consumes=MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(value = "/pdv", produces=MediaType.APPLICATION_JSON_UTF8_VALUE, consumes=MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class PdvController {
 
 	private PdvService service;
@@ -36,15 +39,20 @@ public class PdvController {
 	@PostMapping
 	@ResponseBody
 	public PdvReqResp create(@RequestBody @Valid final PdvReqResp pdv) {
-		LOGGER.info("TEstttttteeeee >> {}", pdv);
 		return service.save(pdv).doOnNext(this::trace).toSingle().doOnSuccess(this::success).toBlocking().value();
-
-		// return service.save(pdv).toSingle().doOnSuccess(result -> {
-		// LOGGER.info("Pdv Save With Success! >> {}", result);
-		// ResponseEntity.ok().body(result);
-		// }).doAfterTerminate(() -> {
-		// LOGGER.info("Terminated!");
-		// });
+	}
+	
+	@GetMapping(value = "/{id}")
+	@ResponseBody
+	public PdvReqResp find(@PathVariable UUID id) {
+		return service.findById(id).doOnNext(this::trace).toSingle().doOnSuccess(this::success).toBlocking().value();
+		
+	}
+	
+	@GetMapping(value = "/{lat}/{lng}")
+	public PdvReqResp findCloserPdv(@PathVariable Double lat, @PathVariable Double lng) { 
+		return service.findCloserPdv(lat, lng).doOnNext(this::trace).toSingle().doOnSuccess(this::success).toBlocking().value();
+		
 	}
 
 	private void trace(PdvReqResp pdv) {
@@ -52,7 +60,7 @@ public class PdvController {
 	}
 
 	private void success(PdvReqResp pdv) {
-		LOGGER.info("Pdv save with Success: {}", pdv);
+		LOGGER.info("Success: {}", pdv);
 	}
 
 	@ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })

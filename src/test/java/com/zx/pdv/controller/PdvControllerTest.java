@@ -1,14 +1,18 @@
 package com.zx.pdv.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -18,12 +22,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.zx.pdv.model.Address;
-import com.zx.pdv.model.CoverageArea;
 import com.zx.pdv.model.PdvReqResp;
 import com.zx.pdv.service.PdvService;
 
+import br.com.six2six.fixturefactory.Fixture;
+import br.com.six2six.fixturefactory.loader.FixtureFactoryLoader;
 import rx.Observable;
 
 @RunWith(SpringRunner.class)
@@ -35,46 +40,17 @@ public class PdvControllerTest {
 	
 	@MockBean
 	private PdvService service;
-		
 	
-	private PdvReqResp createPdv() {
-
-		List<Double> point1 = Arrays.asList(30.00, 20.00);
-		List<Double> point2 = Arrays.asList(45.00, 40.00);
-		List<Double> point3 = Arrays.asList(10.00, 40.00);
-		List<Double> point4 = Arrays.asList(30.00, 20.00);
-		List<List<Double>> polygonDao = Arrays.asList(point1, point2, point3, point4);
-		List<List<List<Double>>> areaDao = Arrays.asList(polygonDao);
-
-		List<Double> point11 = Arrays.asList(15.00, 5.00);
-		List<Double> point22 = Arrays.asList(40.00, 10.00);
-		List<Double> point33 = Arrays.asList(10.00, 20.00);
-		List<Double> point44 = Arrays.asList(5.00, 10.00);
-		List<Double> point55 = Arrays.asList(15.00, 5.00);
-		List<List<Double>> polygon2Dao = Arrays.asList(point11, point22, point33, point44, point55);
-		List<List<List<Double>>> area2Dao = Arrays.asList(polygon2Dao);
-
-		List<List<List<List<Double>>>> multipolygon = Arrays.asList(areaDao, area2Dao);
-
-		Address address = new Address(Arrays.asList(-46.57421, -21.785741));
-		CoverageArea coverage = new CoverageArea(multipolygon);
-		
-		PdvReqResp pdv = new PdvReqResp();
-		pdv.setId(new UUID(1, 1));
-		pdv.setDocument("1432132123891/0001");
-		pdv.setOwnerName("Zé da Silva");
-		pdv.setTradingName("Adega da Cerveja - Pinheiros");
-		pdv.setAddress(address);
-		pdv.setCoverageArea(coverage);
-		
-		return pdv;
+	@BeforeClass
+	public static void setUp() {
+	    FixtureFactoryLoader.loadTemplates("com.zx.pdv.template");
 	}
-	
-	
+
 	@Test
 	public void testCreatePdvSuccess() throws Exception {
+		PdvReqResp pdv = Fixture.from(PdvReqResp.class).gimme("complete");
 		
-		Mockito.when(service.save(Mockito.any(PdvReqResp.class))).thenReturn(Observable.just(createPdv()));
+		Mockito.when(service.save(Mockito.any(PdvReqResp.class))).thenReturn(Observable.just(pdv));
 		
 		String payload = "{" 
 				+ "\"tradingName\": \"Adega da Cerveja - Pinheiros\"," 
@@ -93,44 +69,61 @@ public class PdvControllerTest {
 		mockMvc.perform(post("/pdv/")
 				.contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
 				.content(payload))
-				.andDo(print())	
-	            .andExpect(status().isOk());
+	            .andExpect(status().isOk())
+	            .andExpect(jsonPath("$.id", is(pdv.getId().toString())));
+	}
+			
+	@Test
+	public void testGetPdvByIdSuccess() throws Exception {
+		PdvReqResp pdv = Fixture.from(PdvReqResp.class).gimme("complete");
+		when(service.findById(pdv.getId())).thenReturn(Observable.just(pdv));
+		
+		mockMvc.perform(MockMvcRequestBuilders.get("/pdv/{id}", pdv.getId())
+	            .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+	            .andExpect(status().is(200))
+	            .andExpect(jsonPath("$.id", is(pdv.getId().toString())))
+	            .andExpect(jsonPath("$.document", is(pdv.getDocument())));
+	            	
+		verify(service, times(1)).findById(pdv.getId());
 	}
 	
-
 	@Test
-	public void testCreatePdvWithInvalidCnpj() throws Exception {
+	public void testNoFoundPdvById() throws Exception {
+		UUID id = new UUID(1, 1);
+		when(service.findById(id)).thenReturn(Observable.error(new IllegalArgumentException("Pdv not found")));
 		
-		Mockito.when(service.save(Mockito.any(PdvReqResp.class))).thenReturn(Observable.just(createPdv()));
-		
-		String payload = "{" 
-				+ "\"tradingName\": \"Adega da Cerveja - Pinheiros\"," 
-				+ "\"ownerName\": \"Zé da Silva\","
-				+ "\"document\": \"28.933.662/0001-12\"," 
-				+ "\"coverageArea\": {" 
-					+ "\"type\": \"MultiPolygon\","
-					+ "\"coordinates\": [" 
-						+ "[[[30, 20], [45, 40], [10, 40], [30, 20]]],"
-						+ "[[[15, 5], [40, 10], [10, 20], [5, 10], [15, 5]]]" 
-						+ "]" 
-					+ "}," 
-				+ "\"address\": {"
-					+ "\"type\": \"Point\"," + "\"coordinates\": [-46.57421, -21.785741]}" 
-				+ "}";
-		mockMvc.perform(post("/pdv/")
-	            .contentType(MediaType.APPLICATION_JSON_VALUE)
-	            .content(payload))
+		mockMvc.perform(get("/pdv/{id}", id.toString())
+	            .contentType(MediaType.APPLICATION_JSON_VALUE))
 	            .andExpect(status().is(400));
+		
+		verify(service, times(1)).findById(id);      
 	}
 	
 	@Test
-	public void testGetPdvByIdSuccess() {
+	public void testFindCloserPdv() throws Exception {
+		PdvReqResp pdv = Fixture.from(PdvReqResp.class).gimme("complete");
+		Double lat = pdv.getAddress().getCoordinates().get(0);
+		Double lng = pdv.getAddress().getCoordinates().get(1);
+		when(service.findCloserPdv(lat, lng)).thenReturn(Observable.just(pdv));
 		
+		mockMvc.perform(get("/pdv/{lat}/{lng}", lat, lng)
+	            .contentType(MediaType.APPLICATION_JSON_VALUE))
+	            .andExpect(status().is(200))
+	            .andExpect(jsonPath("$.id", is(pdv.getId().toString())))
+	            .andExpect(jsonPath("$.document", is(pdv.getDocument())));
+		
+		verify(service, times(1)).findCloserPdv(lat, lng);		
 	}
 	
 	@Test
-	public void testSearchPdvCloser() {
+	public void testNotFindPdvCloser() throws Exception {
+		when(service.findCloserPdv(10.0, 30.0)).thenReturn(Observable.error(new IllegalArgumentException("Pdv not found")));
 		
+		mockMvc.perform(get("/pdv/{lat}/{lng}", 10, 30)
+	            .contentType(MediaType.APPLICATION_JSON_VALUE))
+	            .andExpect(status().is(400));
+		
+		verify(service, times(1)).findCloserPdv(10.0, 30.0);
 	}
 
 }
