@@ -2,9 +2,6 @@ package com.zx.pdv.model;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,10 +13,5 @@ public class Address {
 	private final String type = "Point";
 	private List<Double> coordinates;
 	
-//	@JsonCreator
-//	static Address json(@JsonProperty(required=true, value="type") String type,
-//			@JsonProperty(required=true, value="coordinates") List<Double> coordinates) {
-//		return new Address(coordinates);
-//	}
 	
 }

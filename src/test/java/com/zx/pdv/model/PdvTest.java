@@ -1,12 +1,13 @@
 package com.zx.pdv.model;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 import org.json.JSONException;
-import org.junit.Assert;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
@@ -73,10 +74,10 @@ public class PdvTest {
 
 		ObjectMapper mapper = new ObjectMapper();
 		PdvReqResp pdv = mapper.readValue(json, PdvReqResp.class);
-		Assert.assertEquals("Adega da Cerveja - Pinheiros", pdv.getTradingName());
-		Assert.assertEquals("Point", pdv.getAddress().getType());
-		Assert.assertEquals(-46.57421, pdv.getAddress().getCoordinates().get(0), 0.001);
-		Assert.assertEquals(-21.785741, pdv.getAddress().getCoordinates().get(1), 0.001);
-		Assert.assertEquals(30, pdv.getCoverageArea().getCoordinates().get(0).get(0).get(0).get(0), 0.001);
+		assertEquals("Adega da Cerveja - Pinheiros", pdv.getTradingName());
+		assertEquals("Point", pdv.getAddress().getType());
+		assertEquals(-46.57421, pdv.getAddress().getCoordinates().get(0), 0.001);
+		assertEquals(-21.785741, pdv.getAddress().getCoordinates().get(1), 0.001);
+		assertEquals(30, pdv.getCoverageArea().getCoordinates().get(0).get(0).get(0).get(0), 0.001);
 	}
 }

@@ -4,7 +4,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Repository;
 
 import com.datastax.driver.core.ResultSetFuture;
@@ -16,7 +15,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import rx.Observable;
 
 @Repository
-@Lazy
 public class PdvRepository {
 
 	Mapper<Pdv> mapper;

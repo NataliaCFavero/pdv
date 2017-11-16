@@ -20,8 +20,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.zx.pdv.model.Address;
-import com.zx.pdv.model.CoverageArea;
 import com.zx.pdv.model.PdvReqResp;
 import com.zx.pdv.repository.Pdv;
 import com.zx.pdv.repository.PdvRepository;
