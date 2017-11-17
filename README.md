@@ -4,18 +4,19 @@ Project to save and find near pdvs.
 ## Prerequisites
 * Java SE 8
 * Gradle 2.1
+* Docker
 
 ## Getting Started
 	docker pull cassandra
 	docker run --name pdv-cassandra -d cassandra:3.0.0
+	docker exec -it pdv-cassandra bash
+	cqlsh
+	//Run script /scrips/data.cql
 	
-## Running script
-	src/main/resources/data.cql
-
 ## Building Project
 	gradle clean build
 
-## Run Application
+## Run Local Application
 	gradle bootRun
 
 ## Usage
@@ -58,6 +59,3 @@ Project to save and find near pdvs.
           "coordinates": [-46.57421, -21.785741]
         }
     }
-
-## Deployment
-	
